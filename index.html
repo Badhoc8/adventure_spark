@@ -1,0 +1,737 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Roll two dice to pick a small adventure that fits your time, budget, energy and company.">
+<style>
+:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0;font:14px system-ui}
+img{max-width:100%}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<title>AdventureSpark</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=DM+Mono:wght@400;500&family=Figtree:wght@400;500;600;700&display=swap">
+<style>
+/* AdventureSpark design system
+   Palette: Meadow. Colour roles: bg, surface, fg, muted, line; accent for selected states; tint for quiet panels;
+   d1 category die, d2 twist die, go roll button. The three action hues stay apart so each job reads at a glance.
+   Type: Bricolage Grotesque for display, Figtree for text, DM Mono for labels and numbers.
+   Space 4/8/12/16/24/32/48/72. Radius 10/16/24. No icons: state is shown in words and colour.
+   Layout: centred dice stage and result on the left, the constraint panel on the right, passport underneath. */
+:root{
+  --s-1:4px;--s-2:8px;--s-3:12px;--s-4:16px;--s-5:24px;--s-6:32px;--s-7:48px;--s-8:72px;
+  --r-1:10px;--r-2:16px;--r-3:24px;
+  --fs-xs:.75rem;--fs-sm:.875rem;--fs-md:1rem;--fs-lg:1.125rem;--fs-xl:1.5rem;
+  --fs-2xl:clamp(1.9rem,4.2vw,2.9rem);--fs-hero:clamp(2.3rem,4.8vw,3.75rem);
+  --display:"Bricolage Grotesque","Avenir Next","Segoe UI",system-ui,sans-serif;
+  --body:"Figtree","Segoe UI",system-ui,-apple-system,sans-serif;
+  --mono:"DM Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+}
+:root{--bg:#E9EFE4;--surface:#F6F9F2;--fg:#17261A;--muted:#364A39;--line:#C9D6C2;--ctl:#667D69;--accent:#1B5934;--accent-fg:#FFFFFF;--tint:#DCEBDD;--d1:#2E7D4F;--d1-pip:#FFFFFF;--d1-deep:#1E5A37;--d2:#F0C94A;--d2-pip:#2E2300;--d2-deep:#85690A;--go:#A2234F;--go-fg:#FFFFFF;--go-deep:#701538}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#0F1B14;--surface:#16261C;--fg:#E3EFE5;--muted:#B5C9B9;--line:#25392B;--ctl:#6F8A75;--accent:#6FC99A;--accent-fg:#07210F;--tint:#183326;--d1:#6FC99A;--d1-pip:#07210F;--d1-deep:#3E8F64;--d2:#E8C451;--d2-pip:#2E2300;--d2-deep:#A8892A;--go:#F27AA2;--go-fg:#2A0614;--go-deep:#B04A70;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0F1B14;--surface:#16261C;--fg:#E3EFE5;--muted:#B5C9B9;--line:#25392B;--ctl:#6F8A75;--accent:#6FC99A;--accent-fg:#07210F;--tint:#183326;--d1:#6FC99A;--d1-pip:#07210F;--d1-deep:#3E8F64;--d2:#E8C451;--d2-pip:#2E2300;--d2-deep:#A8892A;--go:#F27AA2;--go-fg:#2A0614;--go-deep:#B04A70;color-scheme:dark}
+
+*,*::before,*::after{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font:var(--fs-md)/1.55 var(--body);
+  padding-block:var(--s-6) var(--s-8);
+  padding-left:max(16px,env(safe-area-inset-left,0px));
+  padding-right:max(16px,env(safe-area-inset-right,0px));}
+.wrap{width:100%;max-width:1240px;margin-inline:auto;padding-inline:clamp(0px,3vw,40px);display:flex;flex-direction:column;gap:clamp(32px,5vw,64px)}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+h1,h2,h3,p,ul,ol{margin:0}
+.eyebrow,.tag,.flabel{font-family:var(--mono);font-size:var(--fs-xs);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+
+/* Header */
+.top{display:flex;flex-direction:column;gap:var(--s-4)}
+h1{font-family:var(--display);font-weight:800;font-size:var(--fs-hero);line-height:1.02;letter-spacing:-.03em;max-width:16ch;text-wrap:balance}
+.lede{color:var(--muted);max-width:54ch;font-size:var(--fs-lg)}
+
+/* Page grid */
+
+/* Dice stage, centred */
+.stage{--sz:clamp(96px,13vw,128px);display:flex;flex-direction:column;align-items:center;gap:var(--s-6);padding-block:var(--s-3) 0}
+.dice{display:flex;gap:clamp(28px,6vw,64px)}
+.die-col{display:flex;flex-direction:column;align-items:center;gap:var(--s-4);min-width:0}
+.die{width:var(--sz);height:var(--sz);border-radius:calc(var(--sz) * .21);border:0;padding:calc(var(--sz) * .165);
+  display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr)}
+.die-slot{height:calc(var(--sz) + 26px);display:flex;align-items:center}
+.die i{display:block;width:80%;aspect-ratio:1;border-radius:50%;margin:auto}
+#die1{background:var(--d1);--deep:var(--d1-deep)}
+#die1 i.on{background:var(--d1-pip)}
+#die2{background:var(--d2);--deep:var(--d2-deep)}
+#die2 i.on{background:var(--d2-pip)}
+.die{box-shadow:0 6px 0 var(--deep)}
+.die[aria-pressed="true"]{box-shadow:0 6px 0 var(--deep),0 3px 0 7px var(--bg),0 3px 0 10px var(--fg)}
+.die:focus-visible{outline:3px solid var(--accent);outline-offset:17px}
+.die-label{font-family:var(--mono);font-size:var(--fs-sm);color:var(--muted);height:4.7em;max-width:14ch;text-align:center}
+@keyframes tumble{0%{transform:rotate(0) translateY(0)}25%{transform:rotate(-12deg) translateY(-10px)}50%{transform:rotate(9deg) translateY(0)}75%{transform:rotate(-5deg) translateY(-5px)}100%{transform:rotate(0) translateY(0)}}
+.rolling .die{animation:tumble .5s ease-in-out infinite}
+.rolling .die-col:nth-child(2) .die{animation-delay:.12s}
+.stage-actions{display:flex;flex-direction:column;align-items:center;gap:var(--s-4)}
+.hint{font-size:var(--fs-sm);color:var(--muted);max-width:30ch;text-align:center}
+
+/* Buttons */
+.btn{min-height:44px;border:1px solid var(--ctl);background:var(--surface);border-radius:var(--r-1);padding:10px 16px;font-weight:600}
+.btn:hover{border-color:var(--muted)}
+.btn.primary{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+.btn.primary:hover{filter:brightness(1.08)}
+.btn.go{background:var(--go);color:var(--go-fg);border-color:transparent;box-shadow:0 6px 0 var(--go-deep);
+  font-family:var(--display);font-weight:700;font-size:var(--fs-xl);letter-spacing:-.01em;padding:14px 48px;border-radius:var(--r-2);
+  transition:transform .08s ease,box-shadow .08s ease}
+.btn.go:hover{filter:brightness(1.06)}
+.btn.go:active{transform:translateY(4px);box-shadow:0 2px 0 var(--go-deep)}
+.stage .btn.go{min-width:min(100%,280px)}
+.rig .btn.go{font-size:var(--fs-lg);padding:12px 28px}
+.btn[disabled]{opacity:.55;cursor:default}
+.btn[aria-pressed="true"]{background:var(--tint);border-color:var(--accent)}
+
+/* Result card */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-3);padding:clamp(20px,4vw,40px);display:flex;flex-direction:column;gap:var(--s-5)}
+.adv-title{font-family:var(--display);font-weight:700;font-size:var(--fs-2xl);line-height:1.2;letter-spacing:-.02em;text-wrap:balance}
+.adv-desc{font-size:var(--fs-lg);max-width:60ch}
+.chips{list-style:none;padding:0;display:flex;flex-wrap:wrap;gap:var(--s-2)}
+.chips li{font-size:var(--fs-sm);padding:4px 12px;border-radius:999px;border:1px solid var(--line);color:var(--muted)}
+.kit{font-size:var(--fs-sm);color:var(--muted)}
+.kit,.twist p,.note{max-width:70ch}
+.sr-only{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+.btn[aria-disabled="true"]{opacity:.6;cursor:default}
+.kit b{color:var(--fg);font-weight:600}
+.twist{background:var(--tint);border-radius:var(--r-2);padding:var(--s-4) var(--s-5);display:flex;flex-direction:column;gap:var(--s-2)}
+.note{font-size:var(--fs-sm);color:var(--muted)}
+.actions{display:flex;flex-wrap:wrap;align-items:center;gap:var(--s-3)}
+#toast{font-size:var(--fs-sm);color:var(--muted)}
+.empty-actions{display:flex;flex-wrap:wrap;gap:var(--s-3)}
+
+/* Play row: dice left, result right. Both sit inside the first screen on a laptop. */
+.play{display:grid;grid-template-columns:minmax(0,1fr);gap:var(--s-6);align-items:start}
+.side{display:flex;flex-direction:column;gap:var(--s-4);min-width:0}
+@media (min-width:960px){
+  .top{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);column-gap:var(--s-7);row-gap:var(--s-3);align-items:end}
+  .top .eyebrow{grid-column:1/-1}
+  h1{max-width:none}
+  .lede{padding-bottom:var(--s-2)}
+  .play{grid-template-columns:minmax(0,5fr) minmax(0,6fr);gap:clamp(32px,5vw,80px)}
+  .stage{gap:var(--s-5);padding-top:var(--s-5)}
+  .card{padding:clamp(24px,2.6vw,36px);gap:var(--s-4)}
+}
+@media (min-width:960px) and (max-height:760px){
+  .stage{--sz:clamp(88px,10vw,112px);gap:var(--s-4);padding-top:var(--s-2)}
+  .card{gap:var(--s-3)}
+}
+
+/* Constraint panel: closed by default and secondary to the roll */
+.rig{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-3);min-width:0}
+.rig h2{margin:0}
+.rig-head{min-height:44px;width:100%;display:flex;justify-content:space-between;align-items:center;gap:var(--s-3);background:transparent;border:0;padding:var(--s-4) var(--s-5);text-align:left;border-radius:var(--r-3)}
+.rig-title{display:block;font-family:var(--display);font-weight:700;font-size:var(--fs-lg);letter-spacing:-.01em}
+.rig-head .count{display:block;margin-top:2px}
+.rig-state{flex:none;font-family:var(--mono);font-size:var(--fs-xs);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:4px 12px}
+.rig-body{display:grid;grid-template-rows:1fr;transition:grid-template-rows .3s ease,visibility .3s}
+.rig.collapsed .rig-body{grid-template-rows:0fr;visibility:hidden}
+.rig-clip{overflow:hidden;min-height:0}
+.rig-pad{padding:0 var(--s-5) var(--s-5);display:flex;flex-direction:column;gap:var(--s-5)}
+.count{font-family:var(--mono);font-size:var(--fs-sm);color:var(--muted)}
+.filters{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:var(--s-5) var(--s-6)}
+.fgroup{display:flex;flex-direction:column;gap:var(--s-2);min-width:0}
+.chips-row{display:flex;flex-wrap:wrap;gap:var(--s-2)}
+.chip{min-height:44px;border:1px solid var(--ctl);background:transparent;border-radius:999px;padding:6px 16px;font-size:var(--fs-sm);font-weight:500}
+.chip:hover{border-color:var(--muted)}
+.chip[aria-checked="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
+.toggle{min-height:44px;display:flex;gap:var(--s-3);align-items:center;font-size:var(--fs-sm)}
+.toggle input{flex:none;accent-color:var(--accent);width:24px;height:24px}
+.legend{list-style:none;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr));column-gap:var(--s-6);row-gap:2px;border-top:1px solid var(--line);padding-top:var(--s-4)}
+.legend li{display:grid;grid-template-columns:1.4rem minmax(0,1fr) auto;gap:var(--s-2);font-size:var(--fs-sm);align-items:baseline;padding:3px 0}
+.legend .n{font-family:var(--mono);color:var(--muted)}
+.legend .h{color:var(--muted);font-size:var(--fs-xs);display:block}
+.legend .c{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.rig-actions{display:flex;flex-wrap:wrap;align-items:center;gap:var(--s-3)}
+
+/* Passport */
+.passport{display:flex;flex-direction:column;gap:var(--s-5)}
+.passport h2{font-family:var(--display);font-weight:700;font-size:var(--fs-xl);letter-spacing:-.01em}
+.stamps{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:var(--s-3)}
+.stamp{border:1.5px dashed var(--line);border-radius:var(--r-2);padding:var(--s-4) var(--s-4);display:flex;flex-direction:column;gap:2px;color:var(--muted)}
+.stamp b{font-family:var(--display);font-size:var(--fs-lg);color:inherit}
+.stamp span{font-family:var(--mono);font-size:var(--fs-xs);font-variant-numeric:tabular-nums}
+.stamp.on{border:1.5px solid var(--accent);background:var(--tint);color:var(--fg)}
+.log{list-style:none;padding:0;display:flex;flex-direction:column;border-top:1px solid var(--line)}
+.log li{display:flex;gap:var(--s-3);align-items:center;padding:var(--s-3) 0;border-bottom:1px solid var(--line)}
+.log .t{flex:1;min-width:0;overflow-wrap:anywhere}
+.log .d{font-family:var(--mono);font-size:var(--fs-xs);color:var(--muted);white-space:nowrap}
+.log button{min-height:44px;min-width:44px;border:0;background:transparent;color:var(--muted);padding:4px 8px;border-radius:8px;font-family:var(--mono);font-size:var(--fs-xs);letter-spacing:.06em;text-transform:uppercase}
+.log button:hover{color:var(--fg)}
+.stats{font-family:var(--mono);font-size:var(--fs-sm);color:var(--muted)}
+
+/* Screen grab overlay */
+.overlay{position:fixed;inset:0;z-index:20;background:rgba(6,14,16,.72);display:flex;align-items:center;justify-content:center;
+  padding:max(16px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) max(16px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.sheet{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-2);padding:var(--s-4);width:min(100%,440px);max-height:100%;overflow:auto;display:flex;flex-direction:column;gap:var(--s-3)}
+.sheet img{display:block;width:100%;height:auto;border-radius:var(--r-1)}
+.sheet .hint{max-width:none;text-align:left}
+@media (prefers-reduced-motion:reduce){.rolling .die{animation:none}.rig-body,.btn.go{transition:none}}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <p class="eyebrow">AdventureSpark</p>
+    <h1>Roll for your next small adventure.</h1>
+    <p class="lede" id="lede"></p>
+  </header>
+
+  <div class="play">
+      <section class="stage" id="stage" aria-label="Dice">
+        <div class="dice">
+          <div class="die-col">
+            <div class="die-slot"><button class="die" id="die1" type="button" aria-pressed="false"></button></div>
+            <p class="die-label" id="lab1"></p>
+          </div>
+          <div class="die-col">
+            <div class="die-slot"><button class="die" id="die2" type="button" aria-pressed="false"></button></div>
+            <p class="die-label" id="lab2"></p>
+          </div>
+        </div>
+        <div class="stage-actions">
+          <button class="btn go" id="rollBtn" type="button">Roll the dice</button>
+          <p class="hint">Tap a die to hold it for the next roll.</p>
+        </div>
+      </section>
+      <div class="side">
+      <article class="card" id="card" aria-live="polite" aria-atomic="true"></article>
+    <aside class="rig collapsed" id="rig" aria-label="Constraints">
+        <h2>
+          <button class="rig-head" id="rigHead" type="button" aria-expanded="false" aria-controls="rigBody">
+            <span><span class="rig-title">Rig the dice</span><span class="count" id="count"></span></span>
+            <span class="rig-state" id="rigState">Show</span>
+          </button>
+        </h2>
+        <div class="rig-body" id="rigBody"><div class="rig-clip"><div class="rig-pad">
+        <div class="filters" id="filters"></div>
+        <label class="toggle" for="season">
+          <input type="checkbox" id="season" checked>
+          <span id="seasonLabel"></span>
+        </label>
+        <ol class="legend" id="legend" aria-label="Die faces"></ol>
+        <div class="rig-actions">
+          <button class="btn go" id="rollBtn2" type="button">Roll with these</button>
+          <button class="btn" id="resetBtn" type="button">Reset</button>
+        </div>
+        </div></div></div>
+    </aside>
+      </div>
+  </div>
+
+
+  <section class="passport" aria-label="Passport">
+    <div>
+      <h2>Passport</h2>
+      <p class="stats" id="stats"></p>
+    </div>
+    <div class="stamps" id="stamps"></div>
+    <ul class="log" id="log"></ul>
+  </section>
+</div>
+
+<p class="sr-only" id="sr" role="status"></p>
+<div class="overlay" id="overlay" hidden role="dialog" aria-modal="true" aria-label="Screen grab">
+  <div class="sheet">
+    <img id="grabImg" alt="Your adventure as an image">
+    <p class="hint">Press and hold the image on a phone, or right-click it on a computer, to save it.</p>
+    <div class="actions">
+      <button class="btn primary" id="grabCopy" type="button">Copy image</button>
+      <button class="btn" id="grabClose" type="button">Close</button>
+      <span id="grabMsg" role="status" style="font-size:.88rem;color:var(--muted)"></span>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+/*DATA*/
+const A=(c,t,d,m,p,e,w,l,r,who,k,s)=>({c:c,t:t,d:d,m:m,p:p,e:e,w:w,l:l,r:r,who:who,k:k||'',s:s||''});
+const ALL=[
+/* Wander */
+A(0,"Three left turns","Leave your door and turn left at the first three junctions. From there, turn right whenever you can until you reach a street you have never walked down.",30,0,1,"out","any",0,"spf","Comfortable shoes"),
+A(0,"Bus roulette","Board the first bus that arrives, ride it for twenty minutes, then get off and find your own way home on foot.",240,1,1,"out","day",1,"sp","Contactless card or change"),
+A(0,"Alphabet street hunt","Find something on your route for every letter of the alphabet: shop signs, street names, doorplates. Race a friend, or race yourself.",90,0,1,"out","day",0,"spgf","Phone or notebook"),
+A(0,"Oldest thing on the street","Track down the oldest building, tree or marker within a ten-minute walk, then find out roughly when it was put there.",90,0,1,"out","day",0,"spf","Phone for the lookup"),
+A(0,"Cut-through collector","Follow every alley, footpath and cut-through within a mile of home that you have always walked past.",90,0,2,"out","day",0,"spf","Sturdy shoes"),
+A(0,"Lit windows loop","After dark, walk a loop and pick the three best-lit things you pass: a window, a shop sign, a streetlight. Describe each in one line when you get back.",90,0,1,"out","night",0,"sp","Torch, warm layers","c"),
+A(0,"Sun-down spot","Find the best place within thirty minutes' walk to watch the sun set, and be there before it goes.",90,0,1,"out","day",0,"spf","A flask if it is cold"),
+A(0,"Map from memory","Draw your neighbourhood from memory, then walk it with the map and correct everything you got wrong.",90,0,1,"any","day",0,"spf","Paper and a pen"),
+A(0,"Next train out","Check the departures board at your nearest station, take the first train under an hour away, and spend the day wherever it drops you.",600,2,2,"out","day",2,"sp","Rail fare, a charged phone"),
+A(0,"Follow the water","Pick the nearest river, canal or stream and follow it for as far as you can before you have to turn round.",240,0,2,"out","day",1,"spgf","Snacks and water"),
+/* Make */
+A(1,"Pocket zine","Fold one sheet of A4 into an eight-page mini zine about your week, then give it to someone.",90,0,1,"in","any",0,"spgf","One sheet of paper, scissors, pens"),
+A(1,"Cardboard landmark","Build a model of a real landmark, or a place that does not exist, out of nothing but recycling.",90,0,1,"in","any",0,"spgf","Cardboard, tape, scissors"),
+A(1,"Postcard to future you","Write a postcard to yourself about what you hope is true in a month, and post it.",30,1,1,"any","any",0,"sp","Postcard, stamp"),
+A(1,"Three ways to draw a mug","Draw one object three times: ten minutes, three minutes, then thirty seconds with your other hand.",30,0,1,"in","any",0,"spgf","Paper, pencil"),
+A(1,"Fix the thing","Pick the object you have been ignoring for months, such as a wobbly shelf, a squeaky hinge or a missing button, and fix it today.",90,0,2,"in","any",0,"sp","Whatever the job needs"),
+A(1,"Playlist for a stranger","Describe an imaginary person in one sentence, then make a ten-track playlist that suits them exactly.",30,0,1,"any","any",0,"sp","A music app"),
+A(1,"Ten-second film","Make a stop-motion film at least ten seconds long using a phone and objects from around the house.",90,0,1,"in","any",0,"spgf","Phone, something to prop it on"),
+A(1,"Jam-jar lanterns","Make a few jam-jar lanterns, then put them along a path or doorstep as the light fades.",90,1,1,"any","night",0,"spgf","Jars, tea lights, string","c"),
+A(1,"Loaf from scratch","Bake a loaf of bread from flour, water, yeast and salt, and eat the first slice warm.",240,1,2,"in","any",0,"spgf","Flour, yeast, salt, an oven"),
+A(1,"Seed bombs","Mix compost, clay and wildflower seeds into small balls, then drop them in a scruffy patch of ground you have permission to brighten.",90,1,1,"any","day",0,"spgf","Compost, clay, wildflower seeds","w"),
+/* Taste */
+A(2,"Back-of-the-cupboard dinner","Cook a meal from the three oldest things in your kitchen, plus staples. No shopping allowed.",90,0,1,"in","any",0,"spgf","Whatever is in the cupboard"),
+A(2,"Cheapest-on-the-menu lunch","Eat somewhere you have never been and order the cheapest thing on the menu. Share it, or add the second cheapest.",90,1,1,"in","day",1,"sp","Cash or card"),
+A(2,"Unknown aisle","Visit a food shop from a cuisine you rarely cook, buy three things you cannot identify, then cook with all of them.",240,1,1,"any","day",1,"sp","A shopping bag"),
+A(2,"Flask picnic","Take a flask of something hot and a sandwich to the best view you can reach and eat it slowly.",90,1,1,"out","day",1,"spgf","Flask, a blanket","c"),
+A(2,"Blind taste test","Buy five versions of one thing (crisps, hot sauce, chocolate) and score them blind.",90,1,1,"in","any",0,"pgf","Five products, paper and a pen"),
+A(2,"Hot drink hop","Visit three places for a hot drink, rate each out of ten, and crown a winner.",240,2,1,"out","day",1,"spg","Enough for three drinks","c"),
+A(2,"Ice cream in the cold","Walk to get an ice cream on the coldest day this week and eat it outside.",30,1,1,"out","day",0,"spgf","Gloves","c"),
+A(2,"Forage and bake","Pick blackberries, apples or other fruit you can identify with total certainty, then bake something with it.",240,1,2,"out","day",1,"spgf","Bag, flour, butter, sugar","w"),
+A(2,"Cook a country","Close your eyes, point at a map, and cook a dish from wherever your finger lands.",240,1,2,"in","any",0,"spgf","Ingredients for one dish"),
+A(2,"Breakfast for dinner","Eat breakfast food for dinner tonight, or dinner food for breakfast tomorrow, and see which version wins.",30,0,1,"in","any",0,"spgf","Eggs, toast, imagination"),
+/* Move */
+A(3,"Hill repeats","Find the steepest hill within a mile and walk or jog up it five times, with a slow stroll down each time.",30,0,3,"out","any",0,"sp","Decent footwear"),
+A(3,"Wild dip","Take a cold swim or paddle somewhere safe and legal, with a friend on the bank. Get warm again within minutes.",90,0,3,"out","day",1,"pg","Towel, flask, warm clothes","w"),
+A(3,"Whole-album dance","Put on one full album and dance in the living room until it ends.",90,0,2,"in","any",0,"spgf","An album and a bit of space"),
+A(3,"End of the cycle path","Follow the nearest signed cycle route as far as it goes, then ride back.",240,0,2,"out","day",1,"spg","Bike, helmet, puncture kit"),
+A(3,"Playground circuit","Use the park equipment as a gym: five rounds of climbing, pull-ups, balancing and swinging.",30,0,2,"out","day",0,"spgf","Trainers"),
+A(3,"No-destination walk","Walk for ninety minutes with no destination and never retrace a step.",90,0,2,"out","day",0,"spf","Good shoes"),
+A(3,"First frost walk","Go out early to find frost on the grass and keep walking until the sun clears it.",30,0,1,"out","day",0,"spf","Warm layers","c"),
+A(3,"Park kick-about","Take a ball or frisbee to the park and play for an hour, however badly.",90,0,2,"out","day",0,"pgf","A ball or frisbee"),
+A(3,"Rain walk","Dress properly and go out in the rain on purpose for thirty minutes. Jump in at least one puddle.",30,0,2,"out","any",0,"spgf","Waterproofs"),
+A(3,"Early summit","Climb the nearest hill or high point before nine in the morning and have breakfast at the top.",240,1,3,"out","day",1,"pg","Breakfast in a bag, layers"),
+/* Notice */
+A(4,"Sit spot","Sit in one outdoor spot for thirty minutes and list everything you see, hear and smell.",30,0,1,"out","day",0,"spf","A notebook"),
+A(4,"Twenty of one colour","Pick a colour and find twenty examples of it within half an hour.",30,0,1,"out","day",0,"spgf","Phone or notebook"),
+A(4,"Naked-eye stargazing","Find a dark spot and identify three constellations or planets without a telescope.",90,0,1,"out","night",1,"spgf","A star app, a warm coat"),
+A(4,"Listening walk","Walk for twenty minutes without headphones and write down every distinct sound you hear.",30,0,1,"out","day",0,"spf","A notebook"),
+A(4,"Museum staring contest","Visit a free museum or gallery, choose one object, and look at it for ten full minutes.",90,0,1,"in","day",1,"sp","Opening hours checked"),
+A(4,"One spot, twelve angles","Take twelve photos of the same spot from twelve different heights and angles.",30,0,1,"any","day",0,"spf","Phone camera"),
+A(4,"Bench stories","Sit on a bench and invent a short story for each of three strangers who pass.",30,0,1,"out","day",0,"sp","Nothing but patience"),
+A(4,"Dark park listen","Stand still in a dark park or field for ten minutes and listen for owls and foxes.",90,0,1,"out","night",1,"spg","Warm layers, a torch","c"),
+A(4,"Pond dip","Look closely at one pond, rock pool or stream for half an hour and find five living things.",90,0,1,"out","day",1,"spgf","Magnifier, a net or a jar","w"),
+A(4,"Bookshop lucky dip","Go to a library or second-hand bookshop, take the tenth book on the third shelf, and read its first chapter there.",90,1,1,"in","day",0,"sp","Library card or small change"),
+A(4,"Sunrise stillness","Be outside before sunrise and watch the sky change until the sun is properly up.",30,0,1,"out","any",0,"sp","A warm drink"),
+/* Connect */
+A(5,"Three local tips","Ask three people you meet (a shopkeeper, a neighbour, a dog walker) for their favourite local spot, then visit one.",90,0,1,"out","day",0,"sp","Nothing at all"),
+A(5,"A proper letter","Write a handwritten letter to a friend about something small from this week, and post it.",30,1,1,"in","any",0,"sp","Paper, envelope, stamp"),
+A(5,"Doorstep gift","Bake or buy something small and leave it with a note for a neighbour.",90,1,1,"out","any",0,"spf","Something to give, a card"),
+A(5,"Call someone you have lost touch with","Phone someone you have not spoken to in a year and ask what the best part of their year has been.",30,0,1,"any","any",0,"s","A phone and ten spare minutes"),
+A(5,"House-rule game night","Play a game you know well, but each person invents one new rule before it starts.",90,0,1,"in","night",0,"pgf","A board or card game"),
+A(5,"Skill swap","Teach someone something in twenty minutes and ask them to do the same in return.",90,0,1,"in","any",0,"pg","Whatever you are teaching"),
+A(5,"Litter-pick morning","Fill a few bags with litter from a park or street near you, and chat to anyone who stops to say thanks.",240,0,2,"out","day",1,"spgf","Gloves, bin bags"),
+A(5,"Five sincere compliments","Give five specific compliments to five different people today and notice what happens.",30,0,1,"any","any",0,"sp","A little courage"),
+A(5,"Photo-album evening","Open an old photo folder or album with someone and tell the stories behind six pictures.",90,0,1,"in","night",0,"pgf","Photos, a hot drink"),
+A(5,"Quiz night solo","Turn up to a pub quiz alone and ask to join the team that has a spare seat.",240,1,1,"in","night",1,"s","Cash for a drink"),
+A(5,"Park-bench hello","Say hello to everyone you pass on a thirty-minute walk and keep a tally of who answers.",30,0,1,"out","day",0,"sp","A friendly face")
+];
+/*END*/
+
+const CATS=[
+  {n:"Wander",h:"explore on foot or by bus"},
+  {n:"Make",h:"create something with your hands"},
+  {n:"Taste",h:"eat and drink something new"},
+  {n:"Move",h:"get your pulse up"},
+  {n:"Notice",h:"slow, close attention"},
+  {n:"Connect",h:"involve other people"}
+];
+const TWISTS=[
+  {n:"Pocket the phone",d:"Your phone stays in your pocket until you finish. Emergencies and the map are the only exceptions."},
+  {n:"One photo",d:"Take exactly one photo, and choose it carefully."},
+  {n:"Report back",d:"Send one friend a single sentence about it before bed."},
+  {n:"Start now",d:"Start within ten minutes of this roll. No planning."},
+  {n:"Stretch it",d:"Make it 20% bigger: a little longer, further or braver than planned."},
+  {n:"Clean roll",d:"No twist. Do it your way."}
+];
+const FILTERS=[
+  {k:"m",label:"Time I have",opts:[[30,"30 min"],[90,"90 min"],[240,"Half day"],[600,"All day"]],test:function(a,v){return a.m<=v}},
+  {k:"p",label:"Budget",opts:[[0,"Free"],[1,"Up to £10"],[2,"Treat me"]],test:function(a,v){return a.p<=v}},
+  {k:"e",label:"Energy",opts:[[1,"Gentle"],[2,"Up to steady"],[3,"Bring it on"]],test:function(a,v){return a.e<=v}},
+  {k:"who",label:"Company",opts:[["s","Just me"],["p","Two of us"],["g","A group"],["f","With kids"]],test:function(a,v){return a.who.indexOf(v)>-1}},
+  {k:"w",label:"Setting",opts:[["in","Indoors"],["out","Outdoors"]],test:function(a,v){return a.w==="any"||a.w===v}},
+  {k:"l",label:"Light",opts:[["day","Daylight"],["night","After dark"]],test:function(a,v){return a.l==="any"||a.l===v}},
+  {k:"r",label:"Reach",opts:[[0,"From my door"],[1,"Short trip"],[2,"Anywhere"]],test:function(a,v){return a.r<=v}}
+];
+const TL={30:"30 min",90:"About 90 min",240:"Half a day",600:"A full day"};
+const PL=["Free","Under £10","A treat"];
+const EL=["","Gentle","Steady","Big effort"];
+const WL={"in":"Indoors","out":"Outdoors","any":"Indoors or out"};
+const LL={"day":"Daylight","night":"After dark","any":""};
+const RL=["From your door","Short trip","Day trip"];
+
+const MONTH=new Date().getMonth();
+const WARM=MONTH>=3&&MONTH<=8;
+const state={m:null,p:null,e:null,who:null,w:null,l:null,r:null,season:true};
+const held=[false,false];
+let cur={adv:null,cat:0,twist:0};
+let rolling=false;
+const seen=new Set();
+const reduce=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+const $=function(id){return document.getElementById(id)};
+const chipRefs={};
+
+function loadDone(){
+  try{
+    const v=JSON.parse(localStorage.getItem("adventurespark-done")||"[]");
+    return Array.isArray(v)?v.filter(function(x){return x&&typeof x.t==="string"}):[];
+  }catch(e){return []}
+}
+let done=loadDone();
+function saveDone(){try{localStorage.setItem("adventurespark-done",JSON.stringify(done))}catch(e){}}
+function isDone(t){return done.some(function(x){return x.t===t})}
+
+function seasonOK(a){return !a.s||(a.s==="w")===WARM}
+function matches(a,skip){
+  if(skip!=="season"&&state.season&&!seasonOK(a))return false;
+  return FILTERS.every(function(f){return f.k===skip||state[f.k]==null||f.test(a,state[f.k])});
+}
+function pool(skip){return ALL.filter(function(a){return matches(a,skip)})}
+
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+function pips(n){
+  const P={1:[4],2:[0,8],3:[0,4,8],4:[0,2,6,8],5:[0,2,4,6,8],6:[0,2,3,5,6,8]}[n];
+  let h="";
+  for(let i=0;i<9;i++)h+="<i"+(P.indexOf(i)>-1?' class="on"':"")+"></i>";
+  return h;
+}
+function setDice(c,t){
+  $("die1").innerHTML=pips(c+1);
+  $("die2").innerHTML=pips(t+1);
+  $("die1").setAttribute("aria-pressed",String(held[0]));
+  $("die2").setAttribute("aria-pressed",String(held[1]));
+  $("die1").setAttribute("aria-label","Hold category die. Showing "+(c+1)+", "+CATS[c].n+".");
+  $("die2").setAttribute("aria-label","Hold twist die. Showing "+(t+1)+", "+TWISTS[t].n+".");
+  $("lab1").textContent=(c+1)+" · "+CATS[c].n+(held[0]?" · held":"");
+  $("lab2").textContent=(t+1)+" · "+TWISTS[t].n+(held[1]?" · held":"");
+}
+
+function renderCard(label,note){
+  const a=cur.adv,tw=TWISTS[cur.twist];
+  const chips=[TL[a.m],PL[a.p],EL[a.e],WL[a.w]+(LL[a.l]?", "+LL[a.l].toLowerCase():""),RL[a.r]];
+  $("card").innerHTML=
+    '<p class="tag">'+esc(label)+' · Face '+(cur.cat+1)+' · '+esc(CATS[cur.cat].n)+'</p>'+
+    '<h2 class="adv-title">'+esc(a.t)+'</h2>'+
+    '<p class="adv-desc">'+esc(a.d)+'</p>'+
+    '<ul class="chips">'+chips.map(function(c){return '<li>'+esc(c)+'</li>'}).join("")+'</ul>'+
+    '<p class="kit"><b>You will need</b> · '+esc(a.k)+'</p>'+
+    '<div class="twist"><p class="tag">Twist die · Face '+(cur.twist+1)+' · '+esc(tw.n)+'</p><p>'+esc(tw.d)+'</p></div>'+
+    (note?'<p class="note">'+esc(note)+'</p>':'')+
+    '<div class="actions"><button class="btn" id="doneBtn" type="button"></button><button class="btn" id="grabBtn" type="button">Screen grab</button><span id="toast" role="status"></span></div>';
+  syncDoneBtn();
+  $("doneBtn").onclick=function(){
+    if(isDone(a.t))done=done.filter(function(x){return x.t!==a.t});
+    else done.push({t:a.t,ts:Date.now()});
+    saveDone();syncDoneBtn();renderPassport();
+  };
+  $("grabBtn").onclick=grab;
+}
+function syncDoneBtn(){
+  const b=$("doneBtn");if(!b)return;
+  const d=isDone(cur.adv.t);
+  b.textContent=d?"Done · undo":"Mark as done";
+  b.setAttribute("aria-pressed",String(d));
+}
+function toast(msg){const t=$("toast");if(t){t.textContent=msg;setTimeout(function(){if(t.textContent===msg)t.textContent=""},2200)}}
+function copyText(txt){
+  function fallback(){
+    try{
+      const ta=document.createElement("textarea");ta.value=txt;ta.setAttribute("readonly","");
+      ta.style.position="fixed";ta.style.opacity="0";document.body.appendChild(ta);ta.select();
+      const ok=document.execCommand("copy");document.body.removeChild(ta);
+      toast(ok?"Copied":"Select the text and copy it manually");
+    }catch(e){toast("Copy is not available here")}
+  }
+  try{
+    if(navigator.clipboard&&navigator.clipboard.writeText){
+      navigator.clipboard.writeText(txt).then(function(){toast("Copied")},fallback);
+    }else fallback();
+  }catch(e){fallback()}
+}
+
+function renderEmpty(){
+  let best=null;
+  FILTERS.forEach(function(f){
+    if(state[f.k]!=null){
+      const n=pool(f.k).length;
+      if(!best||n>best.n)best={k:f.k,n:n,label:f.label};
+    }
+  });
+  if(state.season){
+    const n=pool("season").length;
+    if(!best||n>best.n)best={k:"season",n:n,label:"Season"};
+  }
+  const relax=best&&best.n>0;
+  $("card").innerHTML=
+    '<p class="tag">No match</p>'+
+    '<h2 class="adv-title">Nothing fits that combination.</h2>'+
+    '<p class="adv-desc">'+(relax?'Relaxing one constraint unlocks '+best.n+(best.n===1?' adventure':' adventures')+'.':'These constraints rule out every adventure. Reset them and try a looser mix.')+'</p>'+
+    '<div class="empty-actions">'+(relax?'<button class="btn primary" id="relaxBtn" type="button">Drop “'+esc(best.label)+'”</button>':'')+'<button class="btn" id="resetBtn2" type="button">Reset all</button></div>';
+  if(relax)$("relaxBtn").onclick=function(){
+    if(best.k==="season"){state.season=false;$("season").checked=false}
+    else state[best.k]=null;
+    syncFilters();updateCount();roll(false);
+  };
+  $("resetBtn2").onclick=resetAll;
+}
+
+function updateCount(){
+  const p=pool();
+  const active=FILTERS.filter(function(f){return state[f.k]!=null}).length;
+  $("count").textContent=p.length+" of "+ALL.length+" fit"+(active?" · "+active+(active===1?" filter":" filters"):"");
+  const counts=CATS.map(function(){return 0});
+  p.forEach(function(a){counts[a.c]++});
+  $("legend").innerHTML=CATS.map(function(c,i){
+    return '<li><span class="n">'+(i+1)+'</span><span>'+esc(c.n)+'<span class="h">'+esc(c.h)+'</span></span><span class="c">'+counts[i]+'</span></li>';
+  }).join("");
+}
+
+function renderFilters(){
+  const host=$("filters");host.innerHTML="";
+  FILTERS.forEach(function(f){
+    const g=document.createElement("div");g.className="fgroup";
+    const l=document.createElement("p");l.className="flabel";l.id="fl-"+f.k;l.textContent=f.label;
+    const row=document.createElement("div");row.className="chips-row";
+    row.setAttribute("role","radiogroup");row.setAttribute("aria-labelledby",l.id);
+    chipRefs[f.k]=[];
+    [[null,"Any"]].concat(f.opts).forEach(function(o){
+      const b=document.createElement("button");b.type="button";b.className="chip";b.textContent=o[1];
+      b.setAttribute("role","radio");
+      b.onclick=function(){state[f.k]=o[0];syncFilters();updateCount()};
+      b.onkeydown=function(e){
+        const list=chipRefs[f.k];const i=list.findIndex(function(r){return r.b===b});
+        let n=-1;
+        if(e.key==="ArrowRight"||e.key==="ArrowDown")n=(i+1)%list.length;
+        else if(e.key==="ArrowLeft"||e.key==="ArrowUp")n=(i-1+list.length)%list.length;
+        else if(e.key==="Home")n=0;
+        else if(e.key==="End")n=list.length-1;
+        if(n<0)return;
+        e.preventDefault();state[f.k]=list[n].v;syncFilters();updateCount();list[n].b.focus();
+      };
+      row.appendChild(b);chipRefs[f.k].push({v:o[0],b:b});
+    });
+    g.appendChild(l);g.appendChild(row);host.appendChild(g);
+  });
+  syncFilters();
+}
+function syncFilters(){
+  FILTERS.forEach(function(f){
+    chipRefs[f.k].forEach(function(r){const on=state[f.k]===r.v;r.b.setAttribute("aria-checked",String(on));r.b.tabIndex=on?0:-1});
+  });
+}
+function resetAll(){
+  FILTERS.forEach(function(f){state[f.k]=null});
+  state.season=true;$("season").checked=true;
+  syncFilters();updateCount();
+}
+
+function tumble(cat,twist,cb){
+  if(reduce){setDice(cat,twist);cb();return}
+  rolling=true;$("stage").classList.add("rolling");$("rollBtn").setAttribute("aria-disabled","true");$("rollBtn2").setAttribute("aria-disabled","true");
+  let n=0;
+  const iv=setInterval(function(){
+    n++;
+    if(n<10){
+      setDice(held[0]?cur.cat:Math.floor(Math.random()*6),held[1]?cur.twist:Math.floor(Math.random()*6));
+    }else{
+      clearInterval(iv);setDice(cat,twist);
+      rolling=false;$("stage").classList.remove("rolling");$("rollBtn").removeAttribute("aria-disabled");$("rollBtn2").removeAttribute("aria-disabled");
+      cb();
+    }
+  },85);
+}
+
+function roll(fromPanel){
+  if(rolling)return;
+  const p=pool();
+  if(!p.length){renderEmpty();return}
+  let cands=p.filter(function(a){return !seen.has(a.t)&&!isDone(a.t)});
+  if(!cands.length)cands=p.filter(function(a){return !seen.has(a.t)});
+  if(!cands.length){p.forEach(function(a){seen.delete(a.t)});cands=p}
+  let note="";
+  let cat;
+  if(held[0]&&cands.some(function(a){return a.c===cur.cat}))cat=cur.cat;
+  else{
+    if(held[0]){held[0]=false;note="Your held die was released because nothing left under these filters matches that category."}
+    const cs=[];cands.forEach(function(a){if(cs.indexOf(a.c)<0)cs.push(a.c)});
+    cat=cs[Math.floor(Math.random()*cs.length)];
+  }
+  const inCat=cands.filter(function(a){return a.c===cat});
+  const adv=inCat[Math.floor(Math.random()*inCat.length)];
+  const twist=held[1]?cur.twist:Math.floor(Math.random()*6);
+  seen.add(adv.t);
+  $("sr").textContent="Rolling the dice";tumble(cat,twist,function(){
+    cur={adv:adv,cat:cat,twist:twist};
+    renderCard("Your roll",note);
+    if(fromPanel){try{$("stage").scrollIntoView({block:"start",behavior:reduce?"auto":"smooth"})}catch(e){}}
+  });
+}
+
+function renderPassport(){
+  const byT={};ALL.forEach(function(a){byT[a.t]=a});
+  const counts=CATS.map(function(){return 0});
+  done.forEach(function(x){const a=byT[x.t];if(a)counts[a.c]++});
+  const stamped=counts.filter(function(n){return n>0}).length;
+  $("stats").textContent=done.length+" done · "+stamped+" of 6 categories stamped";
+  $("stamps").innerHTML=CATS.map(function(c,i){
+    return '<div class="stamp'+(counts[i]?' on':'')+'"><b>'+esc(c.n)+'</b><span>'+counts[i]+' done</span></div>';
+  }).join("");
+  const log=$("log");
+  if(!done.length){
+    log.innerHTML='<li><span class="t" style="color:var(--muted)">Nothing logged yet. Mark an adventure as done and it lands here.</span></li>';
+    return;
+  }
+  log.innerHTML=done.slice(-6).reverse().map(function(x){
+    const d=new Date(x.ts).toLocaleDateString("en-GB",{day:"numeric",month:"short"});
+    return '<li><span class="t">'+esc(x.t)+'</span><span class="d">'+esc(d)+'</span><button type="button" data-ts="'+x.ts+'" data-t="'+esc(x.t)+'" aria-label="Remove '+esc(x.t)+' from log">Remove</button></li>';
+  }).join("");
+  Array.prototype.forEach.call(log.querySelectorAll("button"),function(b){
+    b.onclick=function(){
+      const ts=Number(b.getAttribute("data-ts")),t=b.getAttribute("data-t");
+      done=done.filter(function(x){return !(x.ts===ts&&x.t===t)});
+      saveDone();renderPassport();syncDoneBtn();
+    };
+  });
+}
+
+let grabCanvas=null;
+function rrect(x,X,Y,w,h,r){x.beginPath();x.moveTo(X+r,Y);x.arcTo(X+w,Y,X+w,Y+h,r);x.arcTo(X+w,Y+h,X,Y+h,r);x.arcTo(X,Y+h,X,Y,r);x.arcTo(X,Y,X+w,Y,r);x.closePath()}
+function wrapLines(x,text,maxW){
+  const words=text.split(" "),lines=[];let line="";
+  words.forEach(function(w){
+    const t=line?line+" "+w:w;
+    if(x.measureText(t).width>maxW&&line){lines.push(line);line=w}else line=t;
+  });
+  if(line)lines.push(line);
+  return lines;
+}
+function drawDie(x,X,Y,s,val,bg,deep,pip){
+  rrect(x,X,Y+8,s,s,s*.21);x.fillStyle=deep;x.fill();
+  rrect(x,X,Y,s,s,s*.21);x.fillStyle=bg;x.fill();
+  const P={1:[4],2:[0,8],3:[0,4,8],4:[0,2,6,8],5:[0,2,4,6,8],6:[0,2,3,5,6,8]}[val];
+  const pad=s*.165,cell=(s-2*pad)/3;
+  x.fillStyle=pip;
+  P.forEach(function(i){
+    x.beginPath();x.arc(X+pad+cell*((i%3)+.5),Y+pad+cell*(Math.floor(i/3)+.5),cell*.4,0,Math.PI*2);x.fill();
+  });
+}
+function grab(){
+  const cs=getComputedStyle(document.documentElement);
+  const v=function(n){return cs.getPropertyValue(n).trim()};
+  const W=1080,M=96,TW=W-2*M;
+  const go=function(){
+    const a=cur.adv,tw=TWISTS[cur.twist];
+    const big=document.createElement("canvas");big.width=W;big.height=2600;
+    const x=big.getContext("2d");
+    let y=M+6;
+    drawDie(x,M,y,160,cur.cat+1,v("--d1"),v("--d1-deep"),v("--d1-pip"));
+    drawDie(x,M+200,y,160,cur.twist+1,v("--d2"),v("--d2-deep"),v("--d2-pip"));
+    y+=160+84;
+    x.fillStyle=v("--muted");x.font='500 26px "DM Mono",monospace';
+    try{x.letterSpacing="3px"}catch(e){}
+    x.fillText(("Face "+(cur.cat+1)+" · "+CATS[cur.cat].n+"   Twist "+(cur.twist+1)).toUpperCase(),M,y);
+    try{x.letterSpacing="0px"}catch(e){}
+    y+=40;
+    x.fillStyle=v("--fg");x.font='700 76px "Bricolage Grotesque",sans-serif';
+    wrapLines(x,a.t,TW).forEach(function(l){y+=84;x.fillText(l,M,y)});
+    y+=40;
+    x.font='500 36px Figtree,sans-serif';
+    wrapLines(x,a.d,TW).forEach(function(l){y+=54;x.fillText(l,M,y)});
+    y+=44;
+    x.font='500 28px Figtree,sans-serif';
+    const chips=[TL[a.m],PL[a.p],EL[a.e],WL[a.w]+(LL[a.l]?", "+LL[a.l].toLowerCase():""),RL[a.r]];
+    let cx=M,cy=y;const ch=56;
+    chips.forEach(function(t){
+      const w=x.measureText(t).width+40;
+      if(cx+w>M+TW){cx=M;cy+=ch+14}
+      rrect(x,cx,cy,w,ch,ch/2);x.strokeStyle=v("--line");x.lineWidth=2;x.stroke();
+      x.fillStyle=v("--muted");x.fillText(t,cx+20,cy+37);
+      cx+=w+12;
+    });
+    y=cy+ch+30;
+    x.fillStyle=v("--muted");x.font='500 28px Figtree,sans-serif';
+    wrapLines(x,"You will need · "+a.k,TW).forEach(function(l){y+=42;x.fillText(l,M,y)});
+    y+=44;
+    const pad=36;
+    x.font='500 34px Figtree,sans-serif';
+    const tl=wrapLines(x,tw.d,TW-2*pad);
+    const bh=pad+20+54+(tl.length-1)*48+pad;
+    rrect(x,M,y,TW,bh,28);x.fillStyle=v("--tint");x.fill();
+    x.fillStyle=v("--muted");x.font='500 24px "DM Mono",monospace';
+    try{x.letterSpacing="3px"}catch(e){}
+    x.fillText(("Twist · Face "+(cur.twist+1)+" · "+tw.n).toUpperCase(),M+pad,y+pad+20);
+    try{x.letterSpacing="0px"}catch(e){}
+    x.fillStyle=v("--fg");x.font='500 34px Figtree,sans-serif';
+    tl.forEach(function(l,i){x.fillText(l,M+pad,y+pad+20+54+i*48)});
+    y+=bh;
+    const total=Math.max(1350,y+170);
+    const out=document.createElement("canvas");out.width=W;out.height=total;
+    const o=out.getContext("2d");
+    o.fillStyle=v("--bg");o.fillRect(0,0,W,total);
+    rrect(o,36,36,W-72,total-72,44);o.fillStyle=v("--surface");o.fill();o.strokeStyle=v("--line");o.lineWidth=2;o.stroke();
+    o.drawImage(big,0,0);
+    o.fillStyle=v("--muted");o.font='500 24px "DM Mono",monospace';
+    try{o.letterSpacing="3px"}catch(e){}
+    o.textAlign="left";o.fillText("ADVENTURESPARK",M,total-84);
+    o.textAlign="right";o.fillText(new Date().toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"}).toUpperCase(),W-M,total-84);
+    grabCanvas=out;
+    $("grabImg").src=out.toDataURL("image/png");
+    $("grabMsg").textContent="";
+    $("overlay").hidden=false;document.querySelector(".wrap").inert=true;
+    $("grabClose").focus();
+  };
+  if(document.fonts&&document.fonts.load){
+    Promise.all([document.fonts.load('700 76px "Bricolage Grotesque"'),document.fonts.load('500 34px Figtree'),document.fonts.load('500 24px "DM Mono"')]).then(go,go);
+  }else go();
+}
+
+function mulberry(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+
+function init(){
+  document.documentElement.setAttribute("lang","en-GB");
+  $("lede").textContent=ALL.length+" small adventures in six categories. One die picks the kind, the other adds a twist. Set what you have to spend, then let chance decide.";
+  $("seasonLabel").textContent="Match the season ("+(WARM?"warm":"cold")+" months)";
+  $("season").onchange=function(){state.season=$("season").checked;updateCount()};
+  $("die1").onclick=function(){if(rolling)return;held[0]=!held[0];setDice(cur.cat,cur.twist)};
+  $("die2").onclick=function(){if(rolling)return;held[1]=!held[1];setDice(cur.cat,cur.twist)};
+  $("rollBtn").onclick=function(){roll(false)};
+  $("rollBtn2").onclick=function(){roll(true)};
+  $("resetBtn").onclick=resetAll;
+  function setRig(open){$("rig").classList.toggle("collapsed",!open);$("rigHead").setAttribute("aria-expanded",String(open));$("rigState").textContent=open?"Hide":"Show"}
+  $("rigHead").onclick=function(){setRig($("rig").classList.contains("collapsed"))};
+  setRig(false);
+  function closeGrab(){$("overlay").hidden=true;document.querySelector(".wrap").inert=false;const b=$("grabBtn");if(b)b.focus()}
+  $("grabClose").onclick=closeGrab;
+  $("overlay").onclick=function(e){if(e.target===this)closeGrab()};
+  document.addEventListener("keydown",function(e){
+    if($("overlay").hidden)return;
+    if(e.key==="Escape"){closeGrab();return}
+    if(e.key==="Tab"){
+      const f=[$("grabCopy"),$("grabClose")],i=f.indexOf(document.activeElement);
+      if(e.shiftKey&&i<=0){e.preventDefault();f[f.length-1].focus()}
+      else if(!e.shiftKey&&i===f.length-1){e.preventDefault();f[0].focus()}
+      else if(i<0){e.preventDefault();f[0].focus()}
+    }
+  });
+  $("grabCopy").onclick=function(){
+    const msg=$("grabMsg"),blocked="Copy is blocked here. Save the image instead.";
+    try{
+      const item=new ClipboardItem({"image/png":new Promise(function(res){grabCanvas.toBlob(res,"image/png")})});
+      navigator.clipboard.write([item]).then(function(){msg.textContent="Image copied"},function(){msg.textContent=blocked});
+    }catch(e){msg.textContent=blocked}
+  };
+  renderFilters();updateCount();
+
+  const d=new Date();
+  const rnd=mulberry(d.getFullYear()*10000+(d.getMonth()+1)*100+d.getDate());
+  const p=pool();
+  const adv=p[Math.floor(rnd()*p.length)];
+  const twist=Math.floor(rnd()*6);
+  cur={adv:adv,cat:adv.c,twist:twist};
+  seen.add(adv.t);
+  setDice(adv.c,twist);
+  renderCard("Today's roll","");
+  renderPassport();
+}
+init();
+})();
+</script>
+
+</body>
+</html>
