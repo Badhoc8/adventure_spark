@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>AdventureSpark Sheffield</title>
+<meta name="description" content="Roll two dice to pick a Sheffield and Peak District adventure that fits your time, effort and company.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=DM+Mono:wght@400;500&family=Figtree:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="top-row">
+      <p class="eyebrow">AdventureSpark</p>
+      <nav class="lists" id="lists" aria-label="Adventure lists"></nav>
+    </div>
+    <h1 id="h1">Roll for your next small adventure.</h1>
+    <p class="lede" id="lede"></p>
+  </header>
+
+  <div class="play">
+      <section class="stage" id="stage" aria-label="Dice">
+        <div class="dice">
+          <div class="die-col">
+            <div class="die-slot"><button class="die" id="die1" type="button" aria-pressed="false"></button></div>
+            <p class="die-label" id="lab1"></p>
+          </div>
+          <div class="die-col">
+            <div class="die-slot"><button class="die" id="die2" type="button" aria-pressed="false"></button></div>
+            <p class="die-label" id="lab2"></p>
+          </div>
+        </div>
+        <div class="stage-actions">
+          <button class="btn go" id="rollBtn" type="button">Roll the dice</button>
+          <p class="hint">Tap a die to hold it for the next roll.</p>
+        </div>
+      </section>
+      <div class="side">
+      <article class="card" id="card" aria-live="polite" aria-atomic="true"></article>
+    <aside class="rig collapsed" id="rig" aria-label="Constraints">
+        <h2>
+          <button class="rig-head" id="rigHead" type="button" aria-expanded="false" aria-controls="rigBody">
+            <span><span class="rig-title">Rig the dice</span><span class="count" id="count"></span></span>
+            <span class="rig-state" id="rigState">Show</span>
+          </button>
+        </h2>
+        <div class="rig-body" id="rigBody"><div class="rig-clip"><div class="rig-pad">
+        <div class="filters" id="filters"></div>
+        <label class="toggle" for="season">
+          <input type="checkbox" id="season" checked>
+          <span id="seasonLabel"></span>
+        </label>
+        <ol class="legend" id="legend" aria-label="Die faces"></ol>
+        <div class="rig-actions">
+          <button class="btn go" id="rollBtn2" type="button">Roll with these</button>
+          <button class="btn" id="resetBtn" type="button">Reset</button>
+        </div>
+        </div></div></div>
+    </aside>
+      </div>
+  </div>
+
+
+  <section class="passport" aria-label="Passport">
+    <div>
+      <h2>Passport</h2>
+      <p class="stats" id="stats"></p>
+    </div>
+    <div class="stamps" id="stamps"></div>
+    <ul class="log" id="log"></ul>
+  </section>
+</div>
+
+<p class="sr-only" id="sr" role="status"></p>
+<div class="overlay" id="overlay" hidden role="dialog" aria-modal="true" aria-label="Screen grab">
+  <div class="sheet">
+    <img id="grabImg" alt="Your adventure as an image">
+    <p class="hint">Press and hold the image on a phone, or right-click it on a computer, to save it.</p>
+    <div class="actions">
+      <button class="btn primary" id="grabCopy" type="button">Copy image</button>
+      <button class="btn" id="grabClose" type="button">Close</button>
+      <span id="grabMsg" role="status" style="font-size:.88rem;color:var(--muted)"></span>
+    </div>
+  </div>
+</div>
+
+<script>window.AS_CONFIG={lists:["sheffield"],start:"sheffield",root:"../"};</script>
+<script src="../data.js"></script>
+<script src="../app.js"></script>
+</body>
+</html>
